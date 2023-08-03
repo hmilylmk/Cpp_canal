@@ -28,7 +28,7 @@ enum PacketType {
     SHUTDOWN = 9;
     // integration
     DUMP = 10;
-    HEARTBEAT = 11;
+    PHEARTBEAT = 11;
     CLIENTROLLBACK = 12;
 }
 
