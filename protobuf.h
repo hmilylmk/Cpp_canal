@@ -8,7 +8,7 @@ class Connector {
 public:
     Connector(const std::string &address = "127.0.0.1", int port = 1111) : address_(address), port_(port) {};
     int connect();
-    std::string read(int len);
+    void* read(int len);
     std::string readNextPacket();
     int write(void *buf, int len);
     int writeWithHead(const std::string &data);

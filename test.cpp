@@ -43,7 +43,7 @@ int main(void)
     Client c1("127.0.0.1", 11111);
     c1.connect();
     c1.checkValid("canal", "canal");
-    c1.subscribe("1001", "example", ".test*");
+    c1.subscribe("1001", "example", "test.user");
     int emptyCount = 0;
     int totalEmptyCount = 120;
     while (emptyCount < totalEmptyCount) {

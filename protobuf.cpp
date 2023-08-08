@@ -1,3 +1,4 @@
+#include <ios>
 #include <sys/socket.h>
 #include <sys/types.h>
 #include <stdlib.h>
@@ -31,17 +32,23 @@ int Connector::connect() {
     return 0;
 }
 
-std::string Connector::read(int len) {
-    char *buf = new char[len];
-    ::recv(socket_, buf, len, 0);
-    return std::string(buf);
+void* Connector::read(int len) {
+    char *buf = new char[len + 1];
+    int receive = ::recv(socket_, buf, len, MSG_WAITALL);
+    if (receive != len) {
+        std::cout << "recv error" << std::endl;
+    }
+    buf[len] = '\0';
+    return static_cast<void *>(buf);
 }
 
 std::string Connector::readNextPacket() {
-    std::string len = read(4);
-    void *buf = const_cast<char*>(len.c_str());
+    void *buf = read(4);
     unsigned int packetLen = ::ntohl(*static_cast<unsigned int *>(buf));
-    return read(packetLen);
+    delete static_cast<char *>(buf);
+    // string store binary data, need construct with len parameter
+    // otherwise will be cut off
+    return std::string(static_cast<char *>(read(packetLen)), packetLen);
 }
 
 int Connector::write(void *buf, int len) {
@@ -52,7 +59,7 @@ int Connector::writeWithHead(const std::string &data) {
     unsigned int len = data.length();
     unsigned int endianLen = ::htonl(len);
     void *buf = const_cast<char*>(data.c_str());
-    write((void*)&endianLen, 4);
+    write(static_cast<void*>(&endianLen), 4);
     return write(buf, len);
 }
 
@@ -102,6 +109,8 @@ bool Client::checkValid(const std::string username, const std::string password) 
 }
 
 bool Client::subscribe(const std::string &clientId, const std::string &destination, const std::string &filter) {
+    clientId_ = clientId;
+    destination_ = destination;
     rollback(0);
     com::alibaba::otter::canal::protocol::Sub sub;
     sub.set_client_id(clientId);
@@ -119,10 +128,7 @@ bool Client::subscribe(const std::string &clientId, const std::string &destinati
     com::alibaba::otter::canal::protocol::Packet packetRead;
     std::string data = conn_.readNextPacket();
     packetRead.ParseFromString(data);
-    if (packetRead.type() != com::alibaba::otter::canal::protocol::PacketType::ACK) {
-        std::cout << "Client subscrib error!" << std::endl;
-        return false;
-    }
+    std::cout << packetRead.type() << std::endl;
     com::alibaba::otter::canal::protocol::Ack ack;
     ack.ParseFromString(packetRead.body());
     if (ack.error_code() > 0) {
