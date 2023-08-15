@@ -3,16 +3,18 @@
 
 #include <string>
 #include <mysql/mysql.h>
+#include <unordered_map>
 
 class MysqlConnector {
+public:
     MysqlConnector(std::string &host, std::string &username, std::string &password, std::string &db) : host_(host), username_(username), password_(password), db_(db) {
         mysql_init(&mysql_);
     }
+    ~MysqlConnector();
 
     int connect();
 
-    int select(std::string &sqlSelect);
-    int update(std::string &sqlUpdate);
+    std::unordered_map<std::string, std::string> getById(std::string &tableName, std::string &fields, int id);
 
 private:
     MYSQL mysql_;
